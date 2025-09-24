@@ -1,0 +1,121 @@
+---
+title: "Neo4j"
+description: "Fundamentos do Neo4j"
+---
+
+# Bancos de dados de grafos
+
+### O que são bancos de dados de grafos (graph databases)?
+
+Grafos (graphs) são estruturas matemáticas compostas por arestas (edges) e vértices (vertices).
+O Neo4j armazena e organiza dados usando nós (nodes), relacionamentos (relationships), rótulos (labels) e propriedades (properties).
+
+### Quando os grafos são úteis?
+
+Grafos são particularmente úteis quando:
+- O problema exige compreender os relacionamentos entre entidades.
+- O problema envolve uma hierarquia.
+- O problema requer explorar relacionamentos de profundidade variável ou desconhecida.;
+- O problema exige avaliar rotas ou caminhos em uma rede.
+
+
+# Neo4j
+
+Neo4j é um banco de dados de grafos, ou seja, armazena informações em forma de nós (nodes) e relacionamentos. 
+Esse modelo é útil quando as conexões entre os dados são tão importantes quanto os próprios dados.
+
+Nós (nodes): representam entidades ou objetos, como pessoas, empresas ou locais. 
+Eles podem ter rótulos (labels) que indicam o tipo de entidade (ex.: Pessoa, Empresa). 
+Um nó pode ter múltiplos rótulos, como “Pessoa” e “Funcionário”.
+
+Relacionamentos: são as conexões (arestas) entre nós. 
+Têm um tipo (ex.: trabalha em, fundado em) e direção (ex.: Michael trabalha na Neo4j). 
+Relacionamentos também podem ser bidirecionais.
+
+Propriedades: tanto nós quanto relacionamentos podem ter atributos no formato chave-valor (ex.: nome, cargo). 
+Essas propriedades podem ser de diferentes tipos de dados (inteiro, string, booleano, lista) e até funcionarem como identificadores únicos.
+
+O modelo do Neo4j, chamado de grafo de propriedades com rótulos (labelled property graph), é flexível, pois dá a mesma importância aos dados e às conexões entre eles.
+
+
+### Grafos de Conhecimento (Knowledge Graphs) e Inteligência Artificial Generativa (Generative AI / GenAI)
+
+Os grafos tornaram-se uma parte importante no desenvolvimento de aplicações de Inteligência Artificial Generativa (Generative AI / GenAI).
+Essas aplicações precisam de acesso ao significado nos dados, e os grafos de conhecimento (knowledge graphs) fornecem esse contexto.
+
+### Casos de uso em Neo4j e GenAI
+
+Há muitos casos de uso combinando Neo4j e GenAI, incluindo:
+Busca vetorial (vector search)
+Grafos de conhecimento (knowledge graph)
+Ciência de dados (data science)
+
+
+# Cypher
+
+A linguagem de consulta Cypher (Cypher query language) é utilizada para interagir com um banco de dados de grafos Neo4j (Neo4j graph database).
+
+O banco de dados de exemplo contém:
+
+Filmes, atores e diretores de uma parte do The Movie Database (TMDB).
+
+Avaliações de filmes feitas por usuários do site (website users).
+
+
+# Neo4j AuraDB
+
+AuraDB é um serviço de nuvem totalmente gerenciado (fully managed cloud service) que fornece um banco de dados Neo4j como serviço (Neo4j database as a service).
+
+Trata-se de um serviço de banco de dados em nuvem totalmente gerenciado, escalável e seguro (fully managed, scalable, and secure cloud database service), que permite que você se concentre no desenvolvimento de aplicações sem se preocupar com os aspectos operacionais da administração de um banco de dados.
+
+https://neo4j.com/product/auradb/
+
+
+Considerando, como exemplo, uma base de dados de filmes:
+
+##### People
+
+```cypher
+MATCH (n:Person)
+WHERE n.name = 'Tom Hanks'
+RETURN n
+```
+
+##### Movies
+
+```cypher
+MATCH (m:Movie)<-[r:ACTED_IN]-(p:Person)
+WHERE m.title = 'Apollo 13'
+RETURN m, r, p
+```
+
+#### Retornar dados tabulares
+
+```cypher
+MATCH (m:Movie)-[r:IN_GENRE]->(g:Genre)
+WHERE m.title = 'Toy Story'
+RETURN m.title, g.name
+```
+
+#### Criação de nós e relacionamentos
+
+```cypher
+MERGE (m:Movie {title: "Arthur the King"})
+SET m.year = 2024
+RETURN m
+```
+
+```cypher
+MERGE (m:Movie {title: "Arthur the King"})
+MERGE (u:User {name: "Adam"})
+MERGE (u)-[r:RATED {rating: 5}]->(m)
+RETURN u, r, m
+```
+
+
+```cypher
+MERGE (m:Movie {title: "Movie title"})
+MERGE (u:User {name: "User name"})
+MERGE (u)-[r:RATED {rating: 1}]->(m)
+RETURN u, r, m
+```
