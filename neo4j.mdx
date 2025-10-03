@@ -1,6 +1,7 @@
 ---
 title: "Neo4j"
 description: "Fundamentos do Neo4j"
+icon: 'database'
 ---
 
 # Bancos de dados de grafos
@@ -10,12 +11,14 @@ description: "Fundamentos do Neo4j"
 Grafos (graphs) são estruturas matemáticas compostas por arestas (edges) e vértices (vertices).
 O Neo4j armazena e organiza dados usando nós (nodes), relacionamentos (relationships), rótulos (labels) e propriedades (properties).
 
+![Neo4j - Graph](./images/neo4j_graph.png)
+
 ### Quando os grafos são úteis?
 
 Grafos são particularmente úteis quando:
 - O problema exige compreender os relacionamentos entre entidades.
 - O problema envolve uma hierarquia.
-- O problema requer explorar relacionamentos de profundidade variável ou desconhecida.;
+- O problema requer explorar relacionamentos de profundidade variável ou desconhecida.
 - O problema exige avaliar rotas ou caminhos em uma rede.
 
 
@@ -38,7 +41,7 @@ Essas propriedades podem ser de diferentes tipos de dados (inteiro, string, bool
 O modelo do Neo4j, chamado de grafo de propriedades com rótulos (labelled property graph), é flexível, pois dá a mesma importância aos dados e às conexões entre eles.
 
 
-### Grafos de Conhecimento (Knowledge Graphs) e Inteligência Artificial Generativa (Generative AI / GenAI)
+### Grafos de Conhecimento e Inteligência Artificial Generativa
 
 Os grafos tornaram-se uma parte importante no desenvolvimento de aplicações de Inteligência Artificial Generativa (Generative AI / GenAI).
 Essas aplicações precisam de acesso ao significado nos dados, e os grafos de conhecimento (knowledge graphs) fornecem esse contexto.
@@ -46,20 +49,9 @@ Essas aplicações precisam de acesso ao significado nos dados, e os grafos de c
 ### Casos de uso em Neo4j e GenAI
 
 Há muitos casos de uso combinando Neo4j e GenAI, incluindo:
-Busca vetorial (vector search)
-Grafos de conhecimento (knowledge graph)
-Ciência de dados (data science)
-
-
-# Cypher
-
-A linguagem de consulta Cypher (Cypher query language) é utilizada para interagir com um banco de dados de grafos Neo4j (Neo4j graph database).
-
-O banco de dados de exemplo contém:
-
-Filmes, atores e diretores de uma parte do The Movie Database (TMDB).
-
-Avaliações de filmes feitas por usuários do site (website users).
+- Busca vetorial (vector search)
+- Grafos de conhecimento (knowledge graph)
+- Ciência de dados (data science)
 
 
 # Neo4j AuraDB
@@ -71,51 +63,478 @@ Trata-se de um serviço de banco de dados em nuvem totalmente gerenciado, escal�
 https://neo4j.com/product/auradb/
 
 
-Considerando, como exemplo, uma base de dados de filmes:
+# Cypher
 
-##### People
+A linguagem de consulta Cypher (Cypher query language) é utilizada para interagir com um banco de dados de grafos Neo4j (Neo4j graph database).
 
+![Neo4j - Cypher](./images/neo4j_cypher.png)
+
+Os nós são representados entre parênteses, e cada nó pode ter um rótulo (label) definido por dois pontos seguidos do nome. Labels agrupam nós com o mesmo conjunto de propriedades (properties). No exemplo, nós do tipo person representam pessoas e nós do tipo movie representam filmes.
+
+Relações (relationships) conectam os nós e definem a estrutura do grafo. Em Cypher, usam-se dois traços (- -) ou dois traços com seta (- ->) para representar a relação. Cada relação deve ter uma direção e um tipo, especificado entre colchetes com dois pontos e o tipo da relação. Ex.: [:ACTED_IN], [:DIRECTED].
+
+Tanto nós quanto relações podem ter propriedades (properties), definidas entre chaves {} como pares chave-valor. Exemplo: um nó person com propriedade name: "Tom Hanks" e um nó movie com title: "Cloud Atlas".
+
+Para consultar, define-se um padrão (pattern) no grafo. Exemplo: buscar o nó person com name: "Tom Hanks" conectado por uma relação ACTED_IN a um nó movie com title: "Cloud Atlas".
+
+Usa-se MATCH para encontrar o padrão.
+
+Usa-se RETURN para retornar os nós ou propriedades desejadas.
+
+O processador da query encontra o nó inicial que satisfaz o critério, percorre a relação definida e retorna o resultado filtrado.
+
+### Consultas
+
+Exemplo:
 ```cypher
-MATCH (n:Person)
-WHERE n.name = 'Tom Hanks'
-RETURN n
+MATCH
+(p:Person {name: 'Tom Hanks'})-[r:ACTED_IN]->(m:Movie {title: 'Cloud Atlas'})
+RETURN p, r, m;
+```
+O resultado pode ser visualizado no neo4j browser como grafo ou em tabela.
+
+Para retornar propriedades específicas, utiliza-se a variável do nó. Exemplo:
+```cypher
+RETURN p.name
 ```
 
-##### Movies
-
+Também é possível aplicar filtros com WHERE, permitindo expressões lógicas. Exemplo:;
 ```cypher
-MATCH (m:Movie)<-[r:ACTED_IN]-(p:Person)
-WHERE m.title = 'Apollo 13'
-RETURN m, r, p
+MATCH (p:Person) 
+WHERE p.name = "Tom Hanks" OR p.name = "Rita Wilson"
+RETURN p
 ```
 
-#### Retornar dados tabulares
+### Filtrando consultas
+
+O comando WHERE é usado para filtrar quais nós (nodes) ou relacionamentos (relationships) são retornados em uma consulta. Há diversas formas de aplicar filtros em Cypher:
+
+**Igualdade e expressões lógicas**
+
+Permite testar propriedades (properties) de nós com condições de igualdade e operadores lógicos (AND, OR, NOT).
 
 ```cypher
-MATCH (m:Movie)-[r:IN_GENRE]->(g:Genre)
-WHERE m.title = 'Toy Story'
-RETURN m.title, g.name
+MATCH (p:Person)-[:ACTED_IN]->(m:Movie)
+WHERE m.released = 2008 OR m.released = 2009
+RETURN p, m
 ```
 
-#### Criação de nós e relacionamentos
+**Filtragem por labels**
+
+Pode-se definir o label diretamente no MATCH ou dentro do WHERE.
 
 ```cypher
-MERGE (m:Movie {title: "Arthur the King"})
-SET m.year = 2024
-RETURN m
+MATCH (p:Person)-[:ACTED_IN]->(m:Movie)
+WHERE m.title = 'The Matrix'
+RETURN p.name
+
+MATCH (p)-[:ACTED_IN]->(m)
+WHERE p:Person AND m:Movie AND m.title='The Matrix'
+RETURN p.name
 ```
 
+**Faixas numéricas (ranges)**
+
+Consulta dentro de um intervalo de valores.
+
+
 ```cypher
-MERGE (m:Movie {title: "Arthur the King"})
-MERGE (u:User {name: "Adam"})
-MERGE (u)-[r:RATED {rating: 5}]->(m)
-RETURN u, r, m
+MATCH (p:Person)-[:ACTED_IN]->(m:Movie)
+WHERE 2000 <= m.released <= 2003
+RETURN p.name, m.title, m.released
+```
+
+**Existência de propriedade**
+
+Usa IS NOT NULL para garantir que a propriedade existe.
+
+```cypher
+MATCH (p:Person)-[:ACTED_IN]->(m:Movie)
+WHERE p.name='Jack Nicholson' AND m.tagline IS NOT NULL
+RETURN m.title, m.tagline
+```
+
+**Strings parciais**
+
+Utiliza STARTS WITH, ENDS WITH, CONTAINS.
+
+```cypher
+MATCH (p:Person)-[:ACTED_IN]->()
+WHERE p.name STARTS WITH 'Michael'
+RETURN p.name
+```
+
+Para evitar problemas de maiúsculas/minúsculas, pode-se usar toLower() ou toUpper().
+
+```cypher
+WHERE toLower(p.name) STARTS WITH 'michael'
 ```
 
 
+**Padrões no grafo**
+
+Filtrar pela existência (ou ausência) de um relacionamento.
+
 ```cypher
-MERGE (m:Movie {title: "Movie title"})
-MERGE (u:User {name: "User name"})
-MERGE (u)-[r:RATED {rating: 1}]->(m)
-RETURN u, r, m
+MATCH (p:Person)-[:WROTE]->(m:Movie)
+WHERE NOT exists((p)-[:DIRECTED]->(m))
+RETURN p.name, m.title
+```
+
+**Listas**
+
+Permite comparar valores diretamente com uma lista (IN).
+
+```cypher
+MATCH (p:Person)
+WHERE p.born IN [1965, 1970, 1975]
+RETURN p.name, p.born
+```
+
+Também pode verificar se um valor está em uma lista armazenada como propriedade:
+
+```cypher
+MATCH (p:Person)-[r:ACTED_IN]->(m:Movie)
+WHERE 'Neo' IN r.roles AND m.title='The Matrix'
+RETURN p.name, r.roles
+```
+
+**Descobrindo propriedades**
+
+`keys(node)` retorna as propriedades de um nó.
+
+```cypher
+MATCH (p:Person)
+RETURN p.name, keys(p)
+```
+
+
+### Criando nós
+
+**Criando um nó com `MERGE`**
+
+O comando MERGE é usado para criar um padrão (pattern) no banco de dados.
+
+Exemplo: criar um nó Person com nome Michael Caine:
+
+```cypher
+MERGE (p:Person {name: 'Michael Caine'})
+```
+
+Ao usar MERGE, é obrigatório especificar pelo menos uma propriedade que funcione como chave primária (primary key).
+
+Para verificar se o nó foi criado:
+
+```cypher
+MATCH (p:Person {name: 'Michael Caine'})
+RETURN p
+```
+
+**Executando múltiplos MERGE**
+
+É possível encadear vários MERGE no mesmo bloco de código.
+
+Exemplo: criar um nó Person e um nó Movie:
+
+```cypher
+MERGE (p:Person {name: 'Katie Holmes'})
+MERGE (m:Movie {title: 'The Dark Knight'})
+RETURN p, m
+```
+
+Aqui, `p` e `m` são variáveis que permitem retornar os nós criados.
+
+**Usando CREATE em vez de MERGE**
+
+O comando CREATE também cria nós, mas sem verificar duplicação.
+
+- Vantagem: mais rápido, útil em importações de dados limpos.
+
+- Desvantagem: pode gerar nós duplicados.
+
+
+### Criando relacionamentos entre nós
+
+**Criando relacionamentos com MERGE**
+
+Assim como para criar nós, usamos MERGE para criar relacionamentos.
+Um relacionamento deve ter:
+
+- Tipo (Type)  ex.: :ACTED_IN
+
+- Direção (Direction)  `-->` ou `<--`
+
+Exemplo: criar um relacionamento entre Person e Movie já existentes:
+
+```cypher
+MATCH (p:Person {name: 'Michael Caine'})
+MATCH (m:Movie {title: 'The Dark Knight'})
+MERGE (p)-[:ACTED_IN]->(m)
+```
+
+**Confirmando o relacionamento**
+
+Podemos verificar se a relação existe:
+
+```cypher
+MATCH (p:Person {name: 'Michael Caine'})-[:ACTED_IN]-(m:Movie {title: 'The Dark Knight'})
+RETURN p, m
+```
+
+> No MATCH, a direção não é obrigatória. Se for invertida erroneamente, nenhum resultado será retornado.
+
+**Criando nós e relacionamentos em múltiplas cláusulas**
+
+É possível encadear várias cláusulas MERGE para criar nós e depois o relacionamento:
+
+```cypher
+MERGE (p:Person {name: 'Chadwick Boseman'})
+MERGE (m:Movie {title: 'Black Panther'})
+MERGE (p)-[:ACTED_IN]-(m)
+```
+
+Se a direção não for especificada, o padrão assumido é da esquerda para a direita.
+
+**Criando nós e relacionamento em uma única cláusula**
+
+O MERGE também pode criar nós e relacionamento de uma só vez:
+
+```cypher
+MERGE (p:Person {name: 'Emily Blunt'})-[:ACTED_IN]->(m:Movie {title: 'A Quiet Place'})
+RETURN p, m
+```
+
+Esse comando pode ser executado várias vezes sem criar duplicações — MERGE garante que nós e relacionamentos só sejam criados se ainda não existirem.
+
+### Atualizando propriedades
+
+Em Cypher, é possível adicionar, modificar ou remover propriedades (properties) de nós (nodes) e relacionamentos (relationships).
+
+**Definindo propriedades inline no MERGE**
+
+Podemos definir propriedades diretamente no MERGE, usando o estilo JSON {}.
+
+```cypher
+MATCH (p:Person {name: 'Michael Caine'})
+MERGE (m:Movie {title: 'Batman Begins'})
+MERGE (p)-[:ACTED_IN {roles: ['Alfred Penny']}]->(m)
+RETURN p, m
+```
+
+Resultado:
+
+- `p` já existe.
+
+- `m` é criado.
+
+- A relação ACTED_IN recebe a propriedade roles.
+
+**Usando `SET`**
+
+Com uma variável que referencia um nó ou relacionamento, podemos usar SET para definir propriedades:
+
+```cypher
+MATCH (p:Person)-[r:ACTED_IN]->(m:Movie)
+WHERE p.name = 'Michael Caine' AND m.title = 'The Dark Knight'
+SET r.roles = ['Alfred Penny']
+RETURN p, r, m
+```
+
+Para múltiplas propriedades:
+
+```cypher
+SET r.roles = ['Alfred Penny'], m.released = 2008
+```
+
+**Atualizando valores**
+
+O SET também pode ser usado para modificar valores existentes:
+
+```cypher
+SET r.roles = ['Mr. Alfred Penny']
+```
+
+**Removendo propriedades**
+
+Duas formas de remover propriedades:
+
+`REMOVE`:
+
+```cypher
+REMOVE r.roles
+```
+
+`SET` `null`:
+
+```cypher
+SET p.born = null
+```
+
+> Nunca remover a propriedade usada como chave primária (primary key).
+
+### Processamento do MERGE
+
+O comando MERGE tenta primeiro encontrar um padrão (pattern) no grafo:
+
+- Se o padrão for encontrado, nada é criado.
+
+- Se o padrão não for encontrado, o nó ou relacionamento é criado.
+
+**Personalizando o comportamento do MERGE**
+
+Podemos definir ações diferentes dependendo se o nó foi criado ou encontrado:
+
+- `ON CREATE SET` → define propriedades apenas quando o nó é criado.
+
+- `ON MATCH SET` → define propriedades apenas quando o nó já existia e foi encontrado.
+
+- `SET` → define propriedades sempre, independentemente da criação ou não.
+
+Exemplo:
+
+```cypher
+MERGE (p:Person {name: 'McKenna Grace'})
+ON CREATE SET p.createdAt = datetime()
+ON MATCH SET p.updatedAt = datetime()
+SET p.born = 2006
+RETURN p
+```
+
+- Se o nó não existe → cria e adiciona createdAt.
+
+- Se já existe → atualiza updatedAt.
+
+- Em ambos os casos → define born = 2006.
+
+Para múltiplas propriedades em um mesmo ON CREATE SET ou ON MATCH SET, separa-se por vírgulas:
+
+```cypher
+ON CREATE SET m.released = 2020, m.tagline = 'A great ride!'
+```
+
+**MERGE com relacionamentos**
+
+O MERGE pode ser usado tanto para nós quanto para relacionamentos.
+
+Exemplo em múltiplas cláusulas:
+```cypher
+MERGE (p:Person {name: 'Michael Caine'})
+MERGE (m:Movie {title: 'The Cider House Rules'})
+MERGE (p)-[:ACTED_IN]->(m)
+```
+
+
+Exemplo em cláusula única:
+```cypher
+MERGE (p:Person {name: 'Michael Caine'})-[:ACTED_IN]->(m:Movie {title: 'The Cider House Rules'})
+RETURN p, m
+```
+
+*O que acontece no processador da query*
+
+- Procura um nó Person com name = 'Michael Caine'.
+
+    - Se não existir → cria.
+
+- Expande os relacionamentos ACTED_IN a partir desse nó.
+
+- Procura um nó Movie com title = 'The Cider House Rules'.
+
+    - Se não existir → cria.
+
+- Verifica se já existe o relacionamento ACTED_IN entre os dois nós.
+
+    - Se não existir → cria a relação.
+
+
+### Deletando dados
+
+No Neo4j, é possível deletar:
+
+- nós (nodes)
+
+- relacionamentos (relationships)
+
+- propriedades (properties)
+
+- rótulos (labels)
+
+Para deletar qualquer dado, é necessário primeiro recuperá-lo com um MATCH e depois aplicar o comando DELETE (ou equivalente).
+
+**Deletando um nó**
+
+Criando e deletando um nó Person:
+
+```cypher
+MERGE (p:Person {name: 'Jane Doe'})
+
+MATCH (p:Person {name: 'Jane Doe'})
+DELETE p
+```
+
+> Se o nó tiver relacionamentos, ocorrerá erro porque o Neo4j não permite deixar relacionamentos órfãos.
+
+**Deletando um relacionamento**
+
+Criando nó + relacionamento:
+
+```cypher
+MATCH (m:Movie {title: 'The Matrix'})
+MERGE (p:Person {name: 'Jane Doe'})
+MERGE (p)-[:ACTED_IN]->(m)
+RETURN p, m
+```
+
+Deletando apenas o relacionamento, mas mantendo o nó:
+
+```cypher
+MATCH (p:Person {name: 'Jane Doe'})-[r:ACTED_IN]->(m:Movie {title: 'The Matrix'})
+DELETE r
+RETURN p, m
+```
+
+**Deletando um nó e seus relacionamentos**
+
+Para remover um nó junto com seus relacionamentos, usa-se DETACH DELETE:
+
+```cypher
+MATCH (p:Person {name: 'Jane Doe'})
+DETACH DELETE p
+```
+
+
+Deletando tudo (*consome muita memória em bases grandes*):
+
+```cypher
+MATCH (n)
+DETACH DELETE n
+```
+
+**Deletando labels**
+
+Criando nó com label Person:
+```cypher
+MERGE (p:Person {name: 'Jane Doe'})
+RETURN p
+```
+
+Adicionando novo label:
+```cypher
+MATCH (p:Person {name: 'Jane Doe'})
+SET p:Developer
+RETURN p
+```
+
+Removendo label:
+```cypher
+MATCH (p:Person {name: 'Jane Doe'})
+REMOVE p:Developer
+RETURN p
+```
+
+Um nó pode ter múltiplos labels (Person, Developer). Eles podem ser combinados no MATCH.
+
+**Descobrindo labels existentes no grafo**
+```cypher
+CALL db.labels()
 ```

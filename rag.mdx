@@ -1,0 +1,65 @@
+---
+title: "RAG"
+description: "Retrieval Augmented Generation"
+---
+
+### Introdução ao RAG
+
+Modelos de linguagem de grande porte (LLMs) são ferramentas poderosas capazes de responder perguntas, resumir textos, gerar código e muito mais, habilidades que há pouco tempo pareciam inatingíveis para computadores. Contudo, sua eficácia depende do conhecimento presente nos dados de treinamento, o que significa que podem falhar em situações que exigem informações recentes ou altamente específicas.
+
+Para lidar com isso, surgiu a abordagem **RAG (Retrieval Augmented Generation)**. Ela combina duas etapas: **recuperação (retrieval)**, em que o sistema busca dados relevantes em bases de conhecimento confiáveis, e **geração (generation)**, em que o modelo usa essas informações adicionais para elaborar uma resposta mais precisa.
+
+Esse processo é comparável ao raciocínio humano: algumas questões podem ser respondidas apenas com conhecimento prévio, mas outras exigem pesquisa ou consulta a fontes externas. No RAG, o componente chamado **retriever** é responsável por localizar as informações relevantes e acrescentá-las ao prompt enviado ao modelo, garantindo que ele tenha o contexto necessário para responder com qualidade.
+
+Assim, o RAG amplia as capacidades dos LLMs, permitindo que forneçam respostas mais atualizadas e especializadas ao combinar o conhecimento pré-existente do modelo com dados recuperados de fontes confiáveis.
+
+### Aplicações do RAG
+
+O modelo **RAG (Retrieval Augmented Generation)** amplia as capacidades dos LLMs ao combiná-los com bases de conhecimento externas, permitindo aplicações em diferentes contextos.
+
+**Geração de código**
+
+Embora modelos de linguagem tenham sido treinados em grandes volumes de código público, gerar código correto para um projeto específico exige acesso a informações internas, como classes, funções, definições e estilo adotado. Um sistema RAG que utiliza o repositório do próprio projeto como base de conhecimento fornece esse contexto, tornando a geração de código mais precisa e útil.
+
+**Chatbots empresariais**
+
+Cada empresa possui produtos, políticas e formas próprias de comunicação. Ao transformar documentos internos em uma base de conhecimento, é possível criar chatbots que atendem clientes com informações atualizadas sobre produtos e suporte, ou assistentes internos que respondem dúvidas sobre políticas e direcionam para a documentação correta. Isso reduz respostas genéricas ou incorretas.
+
+**Saúde e setor jurídico**
+
+Áreas que exigem precisão e lidam com informações específicas e privadas, como medicina e direito, se beneficiam fortemente do RAG. A base de conhecimento pode conter artigos médicos recentes, documentos de processos ou legislação atualizada, permitindo que o LLM produza respostas confiáveis e relevantes.
+
+**Busca na web com IA**
+
+Motores de busca já funcionam como recuperadores de informação, mas hoje, com resumos gerados por IA, tornam-se verdadeiros sistemas RAG em larga escala, utilizando toda a internet como base de conhecimento para entregar respostas condensadas e úteis.
+
+**Assistentes pessoais**
+
+Em nível individual, um RAG pode usar dados como e-mails, mensagens, agenda ou documentos pessoais para apoiar tarefas do dia a dia. Mesmo com uma base pequena, o acesso a esse contexto possibilita um suporte altamente personalizado, desde organizar compromissos até auxiliar em projetos.
+
+No geral, o RAG abre espaço para aplicações em empresas, setores especializados e até na vida pessoal, tornando possível usar LLMs de forma mais precisa, contextualizada e em cenários antes inviáveis.
+
+### Visão geral da arquitetura RAG
+
+A arquitetura de um sistema **RAG (Retrieval Augmented Generation)** mantém a experiência do usuário idêntica ao uso direto de um LLM: digitar um prompt e receber uma resposta. A diferença está nas etapas internas.
+
+**Fluxo de funcionamento**
+
+Quando o prompt chega ao sistema, ele é direcionado ao **retriever**, que acessa a base de conhecimento — essencialmente um banco de documentos úteis. O retriever seleciona os mais relevantes e, com eles, o sistema cria um **prompt aumentado**, que combina a pergunta original com os textos recuperados. Esse novo prompt é enviado ao LLM, que gera uma resposta baseada tanto em seu treinamento quanto no contexto adicional.
+
+**Principais vantagens**
+
+1. **Acesso a informações externas** – Permite que o LLM utilize dados que não estavam em seu treinamento, como políticas internas de empresas ou eventos recentes.
+2. **Redução de alucinações** – Ao inserir informações verificadas no prompt, as respostas se tornam mais fundamentadas e menos genéricas.
+3. **Atualização contínua** – Em vez de treinar novamente o modelo (processo caro e demorado), basta atualizar a base de conhecimento, mantendo as respostas atuais e precisas.
+4. **Citações e rastreabilidade** – O sistema pode incluir referências no prompt aumentado, permitindo que as respostas tragam fontes verificáveis.
+5. **Divisão de responsabilidades** – O retriever foca em encontrar e filtrar informações, enquanto o LLM concentra-se em gerar texto de qualidade, cada componente atuando em sua especialidade.
+
+**Demonstração simplificada**
+
+Em termos práticos, um sistema RAG pode ser implementado com duas funções:
+
+* **retrieve()**: recebe a consulta e retorna documentos relevantes da base.
+* **generate()**: recebe o prompt aumentado (pergunta + documentos) e produz a resposta do LLM.
+
+Esse fluxo mostra que o RAG nada mais é do que fornecer contexto adicional ao modelo, aumentando a precisão, a relevância e a confiabilidade das respostas.

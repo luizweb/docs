@@ -14,28 +14,17 @@
         "tab": "Guides",
         "groups": [
           {
-            "group": "Getting started",
+            "group": "Bancos de dados",
             "pages": [
-              "neo4j",
+              "neo4j"
+            ]
+          },
+          {
+            "group": "Inteligência Artificial",
+            "pages": [
+              "rag",
               "index",
-              "quickstart",
-              "development"
-            ]
-          },
-          {
-            "group": "Customization",
-            "pages": [
-              "essentials/settings",
-              "essentials/navigation"
-            ]
-          },
-          {
-            "group": "Writing content",
-            "pages": [
-              "essentials/markdown",
-              "essentials/code",
-              "essentials/images",
-              "essentials/reusable-snippets"
+              "quickstart"
             ]
           }
         ]
