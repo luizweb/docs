@@ -62,6 +62,20 @@ Trata-se de um serviço de banco de dados em nuvem totalmente gerenciado, escal�
 
 https://neo4j.com/product/auradb/
 
+# Links
+
+- [Neo4j](https://neo4j.com/)
+- [Manual do Cypher](https://neo4j.com/docs/cypher-manual/current/introduction/)
+- [Cypher Cheat Sheet](https://neo4j.com/docs/cypher-cheat-sheet/5/all/)
+- [Data Importer](https://data-importer.neo4j.io/)
+- [Workspace Preview](https://workspace-preview.neo4j.io/)
+- [Sandbox](https://sandbox.neo4j.com/)
+- [Arrows](https://arrows.app/)
+- [AuraDB](https://console.neo4j.io/)
+- [Neodash - Dashboard](https://neodash.graphapp.io/)
+- [Graph Academy](https://graphacademy.neo4j.com/)
+- [GraphRAG](https://graphrag.com/)
+
 
 # Cypher
 
@@ -82,6 +96,9 @@ Usa-se MATCH para encontrar o padrão.
 Usa-se RETURN para retornar os nós ou propriedades desejadas.
 
 O processador da query encontra o nó inicial que satisfaz o critério, percorre a relação definida e retorna o resultado filtrado.
+
+
+
 
 ### Consultas
 
@@ -537,4 +554,135 @@ Um nó pode ter múltiplos labels (Person, Developer). Eles podem ser combinados
 **Descobrindo labels existentes no grafo**
 ```cypher
 CALL db.labels()
+```
+
+---
+
+# Cypher - Consultas intermediárias
+
+Visualizar o modelo de dados:
+```cypher
+CALL db.schema.visualization()
+```
+
+Tipos de propriedade dos nós no grafo:
+```cypher
+CALL db.schema.nodeTypeProperties()
+```
+
+Visualizar os tipos de propriedade para relacionamentos:;
+```cypher
+CALL db.schema.relTypeProperties()
+```
+
+Visualizar os índices de restrição de exclusividade (CONSTRAINTS):
+```cypher
+SHOW CONSTRAINTS
+```
+
+### Filtrando Consultas
+```cypher
+//Testing Equality
+MATCH (p:Person)-[:ACTED_IN]->(m:Movie)
+WHERE p.name = 'Tom Hanks'
+AND m.year = 2013
+RETURN m.title
+
+//Testing Inequality
+MATCH (p:Person)-[:ACTED_IN]->(m:Movie)
+WHERE p.name <> 'Tom Hanks'
+AND m.title = 'Captain Phillips'
+RETURN p.name
+
+//Testing less than or greater than
+MATCH (m:Movie) WHERE m.title = 'Toy Story'
+RETURN
+    m.year < 1995 AS lessThan, //  Less than (false)
+    m.year <= 1995 AS lessThanOrEqual, // Less than or equal(true)
+    m.year > 1995 AS moreThan, // More than (false)
+    m.year >= 1995 AS moreThanOrEqual // More than or equal (true)
+
+//Testing Ranges
+MATCH (p:Person)-[:ACTED_IN]->(m:Movie)
+WHERE p.name = 'Tom Hanks'
+AND  2005 <= m.year <= 2010
+RETURN m.title, m.released
+
+MATCH (p:Person)-[:ACTED_IN]->(m:Movie)
+WHERE p.name = 'Tom Hanks'
+OR m.title = 'Captain Phillips'
+RETURN p.name, m.title
+
+//Testing null property values
+MATCH (p:Person)
+WHERE p.died IS NOT NULL
+AND p.born.year >= 1985
+RETURN p.name, p.born, p.died
+
+MATCH (p:Person)
+WHERE p.died IS NULL
+AND p.born.year <= 1922
+RETURN p.name, p.born, p.died
+
+//Testing labels or patterns?
+MATCH (p:Person)
+WHERE  p.born.year > 1960
+AND p:Actor
+AND p:Director
+RETURN p.name, p.born, labels(p)
+
+MATCH (p:Person)-[:ACTED_IN]->(m:Movie)<-[:DIRECTED]-(p)
+WHERE  p.born.year > 1960
+RETURN p.name, p.born, labels(p), m.title
+
+//Discovering relationship types
+MATCH (p:Person)-[r]->(m:Movie)
+WHERE  p.name = 'Tom Hanks'
+RETURN m.title AS movie, type(r) AS relationshipType
+
+//Testing list inclusion
+MATCH (m:Movie)
+WHERE "Israel" IN m.countries
+RETURN m.title, m.languages, m.countries
+```
+
+### Testando Strings
+```cypher;
+// --- Testing strings ---
+MATCH (m:Movie)
+WHERE  m.title STARTS WITH 'Toy Story'
+RETURN m.title, m.released
+
+MATCH (m:Movie)
+WHERE  m.title ENDS WITH ' I'
+RETURN m.title, m.released
+
+MATCH (m:Movie)
+WHERE  m.title CONTAINS 'River'
+RETURN m.title, m.released
+
+//Case-sensitive strings
+MATCH (p:Person)
+WHERE toLower(p.name) ENDS WITH 'demille'
+RETURN p.name
+
+MATCH (p:Person)
+WHERE toUpper(p.name) ENDS WITH 'DEMILLE'
+RETURN p.name
+
+MATCH (p:Person)
+WHERE toUpper(p.name) CONTAINS ' DE '
+RETURN p.name
+
+//About indexes for queries
+//If you transform a string property during a query, such as toUpper() or toLower(), the query engine turns off the use of the index.
+
+//EXPLAIN
+EXPLAIN MATCH (m:Movie)
+WHERE  m.title STARTS WITH 'Toy Story'
+RETURN m.title, m.released
+
+EXPLAIN MATCH (p:Person)
+WHERE toLower(p.name) ENDS WITH 'demille'
+RETURN p.name
 ```
