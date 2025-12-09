@@ -647,7 +647,7 @@ RETURN m.title, m.languages, m.countries
 ```
 
 ### Testando Strings
-```cypher;
+```cypher
 // --- Testing strings ---
 MATCH (m:Movie)
 WHERE  m.title STARTS WITH 'Toy Story'
@@ -685,4 +685,939 @@ RETURN m.title, m.released
 EXPLAIN MATCH (p:Person)
 WHERE toLower(p.name) ENDS WITH 'demille'
 RETURN p.name
+```
+
+You can view the data model by executing this query:
+
+```cypher
+CALL db.schema.visualization()
+```
+
+Property types for nodes 
+```cypher
+CALL db.schema.nodeTypeProperties()
+```
+
+Property types for relationships 
+```cypher
+CALL db.schema.relTypeProperties()
+```
+
+You can view the uniqueness constraint indexes in the graph by executing this query:
+```cypher
+SHOW CONSTRAINTS
+```
+
+
+### Testing Equality
+```cypher
+MATCH (p:Person)-[:ACTED_IN]->(m:Movie)
+WHERE p.name = 'Tom Hanks'
+AND m.year = 2013
+RETURN m.title
+```
+
+### Testing Inequality
+```cypher
+MATCH (p:Person)-[:ACTED_IN]->(m:Movie)
+WHERE p.name <> 'Tom Hanks'
+AND m.title = 'Captain Phillips'
+RETURN p.name
+```
+
+### Testing less than or greater than
+```cypher
+MATCH (m:Movie) WHERE m.title = 'Toy Story'
+RETURN
+    m.year < 1995 AS lessThan, //  Less than (false)
+    m.year <= 1995 AS lessThanOrEqual, // Less than or equal(true)
+    m.year > 1995 AS moreThan, // More than (false)
+    m.year >= 1995 AS moreThanOrEqual // More than or equal (true)
+```
+
+### Testing Ranges
+```cypher
+MATCH (p:Person)-[:ACTED_IN]->(m:Movie)
+WHERE p.name = 'Tom Hanks'
+AND  2005 <= m.year <= 2010
+RETURN m.title, m.released
+```
+
+```cypher
+MATCH (p:Person)-[:ACTED_IN]->(m:Movie)
+WHERE p.name = 'Tom Hanks'
+OR m.title = 'Captain Phillips'
+RETURN p.name, m.title
+```
+
+### Testing `null` property values
+```cypher
+MATCH (p:Person)
+WHERE p.died IS NOT NULL
+AND p.born.year >= 1985
+RETURN p.name, p.born, p.died
+```
+
+```cypher
+MATCH (p:Person)
+WHERE p.died IS NULL
+AND p.born.year <= 1922
+RETURN p.name, p.born, p.died
+```
+
+### Testing labels or patterns?
+Depending on your data model, it may be useful to test that a node has a label. This is particularly useful when a node may have multiple labels.
+
+```cypher
+MATCH (p:Person)
+WHERE  p.born.year > 1960
+AND p:Actor
+AND p:Director
+RETURN p.name, p.born, labels(p)
+```
+
+```cypher
+MATCH (p:Person)-[:ACTED_IN]->(m:Movie)<-[:DIRECTED]-(p)
+WHERE  p.born.year > 1960
+RETURN p.name, p.born, labels(p), m.title
+```
+### Discovering relationship types
+```cypher
+MATCH (p:Person)-[r]->(m:Movie)
+WHERE  p.name = 'Tom Hanks'
+RETURN m.title AS movie, type(r) AS relationshipType
+```
+
+### Testing list inclusion
+```cypher
+MATCH (m:Movie)
+WHERE "Israel" IN m.countries
+RETURN m.title, m.languages, m.countries
+```
+
+### Testing strings
+```cypher
+MATCH (m:Movie)
+WHERE  m.title STARTS WITH 'Toy Story'
+RETURN m.title, m.released
+```
+
+```cypher
+MATCH (m:Movie)
+WHERE  m.title ENDS WITH ' I'
+RETURN m.title, m.released
+```
+
+```cypher
+MATCH (m:Movie)
+WHERE  m.title CONTAINS 'River'
+RETURN m.title, m.released
+```
+
+### Case-sensitive strings
+```cypher
+MATCH (p:Person)
+WHERE toLower(p.name) ENDS WITH 'demille'
+RETURN p.name
+```
+
+```cypher
+MATCH (p:Person)
+WHERE toUpper(p.name) ENDS WITH 'DEMILLE'
+RETURN p.name
+```
+
+```cypher
+MATCH (p:Person)
+WHERE toUpper(p.name) CONTAINS ' DE '
+RETURN p.name
+```
+
+### About indexes for queries
+```cypher
+EXPLAIN MATCH (m:Movie)
+WHERE  m.title STARTS WITH 'Toy Story'
+RETURN m.title, m.released
+```
+
+```cypher
+EXPLAIN MATCH (p:Person)
+WHERE toLower(p.name) ENDS WITH 'demille'
+RETURN p.name
+```
+
+
+----
+### Patterns in the graph
+```cypher
+MATCH (p:Person)-[:ACTED_IN]->(m:Movie)
+WHERE  p.name = 'Tom Hanks'
+AND exists {(p)-[:DIRECTED]->(m)}
+RETURN p.name, labels(p), m.title
+```
+
+### Profiling queries
+You can use the PROFILE keyword to show the total number of rows retrieved from the graph in the query.
+```cypher
+PROFILE MATCH (p:Person)-[:ACTED_IN]->(m:Movie)
+WHERE  p.name = 'Tom Hanks'
+AND exists {(p)-[:DIRECTED]->(m)}
+RETURN m.title
+```
+
+```cypher
+PROFILE MATCH (p:Person)-[:ACTED_IN]->(m:Movie)<-[:DIRECTED]-(p)
+WHERE  p.name = 'Tom Hanks'
+RETURN  m.title
+```
+### Finding non-patterns - NOT exists
+```cypher
+MATCH (p:Person)-[:ACTED_IN]->(m:Movie)
+WHERE  p.name = 'Tom Hanks'
+AND NOT exists {(p)-[:DIRECTED]->(m)}
+RETURN  m.title
+```
+
+### Multiple MATCH Clauses
+```cypher
+MATCH (a:Person)-[:ACTED_IN]->(m:Movie)
+WHERE m.year > 2000
+MATCH (m)<-[:DIRECTED]-(d:Person)
+RETURN a.name, m.title, d.name
+```
+
+### Using multiple patterns in the MATCH clause
+```cypher
+MATCH (a:Person)-[:ACTED_IN]->(m:Movie)
+WHERE m.year > 2000
+MATCH (m)<-[:DIRECTED]-(d:Person)
+RETURN a.name, m.title, d.name
+```
+
+### Using a single pattern
+```cypher
+MATCH (a:Person)-[:ACTED_IN]->(m:Movie)<-[:DIRECTED]-(d:Person)
+WHERE m.year > 2000
+RETURN a.name, m.title, d.name
+```
+
+### Optionally matching rows
+```cypher
+MATCH (m:Movie) WHERE m.title = "Kiss Me Deadly"
+MATCH (m)-[:IN_GENRE]->(g:Genre)<-[:IN_GENRE]-(rec:Movie)
+MATCH (m)<-[:ACTED_IN]-(a:Actor)-[:ACTED_IN]->(rec)
+RETURN rec.title, a.name
+```
+
+### OPTIONAL MATCH
+OPTIONAL MATCH could be considered the Cypher equivalent of the outer join in SQL.
+```cypher
+MATCH (m:Movie) WHERE m.title = "Kiss Me Deadly"
+MATCH (m)-[:IN_GENRE]->(g:Genre)<-[:IN_GENRE]-(rec:Movie)
+OPTIONAL MATCH (m)<-[:ACTED_IN]-(a:Actor)-[:ACTED_IN]->(rec)
+RETURN rec.title, a.name
+```
+
+## Controlling Results Returned
+
+### Ordering Returned Results
+```cypher
+MATCH (p:Person)
+WHERE p.born.year = 1980
+RETURN p.name AS name,
+p.born AS birthDate
+ORDER BY p.born
+```
+```cypher
+MATCH (p:Person)
+WHERE p.born.year = 1980
+RETURN p.name AS name, p.born AS birthDate
+ORDER BY p.born DESC
+```
+
+### Eliminating null values returned
+```cypher
+MATCH (p:Person)
+RETURN p.name AS name, p.born AS birthDate
+ORDER BY p.born DESC
+```
+```cypher
+MATCH (p:Person)
+WHERE p.born IS NOT NULL
+RETURN p.name AS name, p.born AS birthDate
+ORDER BY p.born DESC
+```
+### Ordering multiple results
+```cypher
+MATCH (p:Person)-[:DIRECTED | ACTED_IN]->(m:Movie)
+WHERE p.name = 'Tom Hanks'
+OR p.name = 'Keanu Reeves'
+RETURN  m.year, m.title
+ORDER BY m.year DESC , m.title
+```
+
+### Limiting results
+```cypher
+MATCH (m:Movie)
+WHERE m.released IS NOT NULL
+RETURN m.title AS title,
+m.released AS releaseDate
+ORDER BY m.released DESC LIMIT 100
+```
+```cypher
+MATCH (p:Person) WHERE
+p.born IS NOT NULL
+RETURN p.name as name,
+p.born AS birthDate
+ORDER BY p.born DESC LIMIT 1
+```
+
+### Skipping some results
+In this query, we return 10 rows representing page 5, where each page contains 10 rows.
+```cypher
+MATCH (p:Person)
+WHERE p.born.year = 1980
+RETURN  p.name as name,
+p.born AS birthDate
+ORDER BY p.born SKIP 40 LIMIT 10
+```
+
+### Eliminating duplicate records
+```cypher
+MATCH (p:Person)-[:DIRECTED | ACTED_IN]->(m:Movie)
+WHERE p.name = 'Tom Hanks'
+RETURN DISTINCT m.title, m.released
+ORDER BY m.title
+```
+### Uses of DISTINCT
+```cypher
+MATCH (m:Movie)
+RETURN DISTINCT m.year
+ORDER BY m.year
+```
+
+```cypher
+MATCH (p:Person)-[:DIRECTED | ACTED_IN]->(m:Movie)
+WHERE p.name = 'Tom Hanks'
+RETURN  DISTINCT m
+```
+
+## Map projections
+```cypher
+MATCH (p:Person)
+WHERE p.name CONTAINS "Thomas"
+RETURN p AS person
+ORDER BY p.name ASC
+```
+Another way that you can return data is without the internal node information, that is, only property values.
+```cypher
+MATCH (p:Person)
+WHERE p.name CONTAINS "Thomas"
+RETURN p { .* } AS person
+ORDER BY p.name ASC
+```
+
+```cypher
+MATCH (p:Person)
+WHERE p.name CONTAINS "Thomas"
+RETURN p { .name, .born } AS person
+ORDER BY p.name
+```
+
+```cypher
+MATCH (m:Movie)<-[:DIRECTED]-(d:Director)
+WHERE d.name = 'Woody Allen'
+RETURN m {.*, favorite: true} AS movie
+```
+
+## Changing data returned
+```cypher
+MATCH (m:Movie)<-[:ACTED_IN]-(p:Person)
+WHERE m.title CONTAINS 'Toy Story' AND
+p.died IS NULL
+RETURN m.title AS movie,
+p.name AS actor,
+p.born AS dob,
+date().year - p.born.year AS ageThisYear
+```
+
+```cypher
+MATCH (m:Movie)<-[:ACTED_IN]-(p:Person)
+WHERE m.title CONTAINS 'Toy Story' AND
+p.died IS NULL
+RETURN 'Movie: ' + m.title AS movie,
+p.name AS actor,
+p.born AS dob,
+date().year - p.born.year AS ageThisYear
+```
+### Conditionally changing data returned
+```cypher
+MATCH (m:Movie)<-[:ACTED_IN]-(p:Person)
+WHERE p.name = 'Henry Fonda'
+RETURN m.title AS movie,
+CASE
+WHEN m.year < 1940 THEN 'oldies'
+WHEN 1940 <= m.year < 1950 THEN 'forties'
+WHEN 1950 <= m.year < 1960 THEN 'fifties'
+WHEN 1960 <= m.year < 1970 THEN 'sixties'
+WHEN 1970 <= m.year < 1980 THEN 'seventies'
+WHEN 1980 <= m.year < 1990 THEN 'eighties'
+WHEN 1990 <= m.year < 2000 THEN 'nineties'
+ELSE  'two-thousands'
+END
+AS timeFrame
+```
+
+## Aggregating Data
+
+### Using count() to aggregate data
+```cypher
+MATCH (a:Person)-[:ACTED_IN]->(m:Movie)
+WHERE a.name = 'Tom Hanks'
+RETURN a.name AS actorName,
+count(*) AS numMovies
+```
+
+```cypher
+MATCH (a:Person)-[:ACTED_IN]->(m:Movie)<-[:DIRECTED]-(d:Person)
+RETURN a.name AS actorName,
+d.name AS directorName,
+count(*) AS numMovies
+ORDER BY numMovies DESC
+```
+### Returning a list
+```cypher
+MATCH (p:Person)
+RETURN p.name, [p.born, p.died] AS lifeTime
+LIMIT 10
+```
+### Using collect() to create a list
+```cypher
+MATCH (a:Person)-[:ACTED_IN]->(m:Movie)
+RETURN a.name AS actor,
+count(*) AS total,
+collect(m.title) AS movies
+ORDER BY total DESC LIMIT 10
+```
+### Eliminating duplication in lists
+```cypher
+MATCH (a:Person)-[:ACTED_IN]->(m:Movie)
+WHERE m.year = 1920
+RETURN  collect( DISTINCT m.title) AS movies,
+collect( a.name) AS actors
+```
+
+### Collecting nodes
+```cypher
+MATCH (p:Person)-[:ACTED_IN]->(m:Movie)
+WHERE p.name ='Tom Cruise'
+RETURN collect(m) AS tomCruiseMovies
+```
+
+### Accessing elements of a list
+```cypher
+MATCH (a:Person)-[:ACTED_IN]->(m:Movie)
+RETURN m.title AS movie,
+collect(a.name)[0] AS castMember,
+size(collect(a.name)) as castSize
+```
+
+```cypher
+MATCH (a:Person)-[:ACTED_IN]->(m:Movie)
+RETURN m.title AS movie,
+collect(a.name)[2..] AS castMember,
+size(collect(a.name)) as castSize
+```
+Other aggregating functions
+There are more aggregating functions that may be useful for your application such as:
+
+`min()`, `max()`, `avg()`, `stddev()`, `sum()`
+
+### count() versus size()
+```cypher
+MATCH (actor:Person)-[:ACTED_IN]->(m:Movie)<-[:DIRECTED]-(director:Person)
+RETURN actor.name, director.name,
+size(collect(m)) AS collaborations,
+collect(m.title) AS movies
+```
+
+### List comprehension
+```cypher
+MATCH (m:Movie)
+RETURN m.title as movie,
+[x IN m.countries WHERE x CONTAINS 'USA' OR x CONTAINS 'Germany']
+AS country LIMIT 500
+```
+
+### Pattern comprehension
+```cypher
+MATCH (m:Movie)
+WHERE m.year = 2015
+RETURN m.title,
+[(dir:Person)-[:DIRECTED]->(m) | dir.name] AS directors,
+[(actor:Person)-[:ACTED_IN]->(m) | actor.name] AS actors
+```
+
+### Working with maps
+```cypher
+RETURN {Jan: 31, Feb: 28, Mar: 31, Apr: 30 ,
+May: 31, Jun: 30 , Jul: 31, Aug: 31, Sep: 30,
+Oct: 31, Nov: 30, Dec: 31}['Feb'] AS daysInFeb
+```
+
+```cypher
+RETURN {Jan: 31, Feb: 28, Mar: 31, Apr: 30 ,
+May: 31, Jun: 30 , Jul: 31, Aug: 31, Sep: 30,
+Oct: 31, Nov: 30, Dec: 31}.Feb AS daysInFeb
+```
+
+```cypher
+RETURN keys({Jan: 31, Feb: 28, Mar: 31, Apr: 30 ,
+May: 31, Jun: 30 ,Jul: 31, Aug: 31, Sep: 30,
+Oct: 31, Nov: 30, Dec: 31}) AS months
+```
+## Working with Dates and Times
+
+### Date and Time data in Cypher
+```cypher
+RETURN date(), datetime(), time()
+```
+
+```cypher
+MERGE (x:Test {id: 1})
+SET x.date = date(),
+    x.datetime = datetime(),
+    x.time = time()
+RETURN x
+```
+### Extracting components of a date or datetime
+```cypher
+MATCH (x:Test {id: 1})
+RETURN x.date.day, x.date.year,
+x.datetime.year, x.datetime.hour,
+x.datetime.minute
+```
+
+### Setting date values
+```cypher
+MATCH (x:Test {id: 1})
+SET x.date1 = date('2022-01-01'),
+    x.date2 = date('2022-01-15')
+RETURN x
+```
+### Setting datetime values
+```cypher
+MATCH (x:Test {id: 1})
+SET x.datetime1 = datetime('2022-01-04T10:05:20'),
+    x.datetime2 = datetime('2022-04-09T18:33:05')
+RETURN x
+```
+### Working with durations
+```cypher
+MATCH (x:Test {id: 1})
+RETURN duration.between(x.date1,x.date2)
+```
+
+```cypher
+MATCH (x:Test {id: 1})
+RETURN duration.inDays(x.datetime1,x.datetime2).days
+```
+
+```cypher
+MATCH (x:Test {id: 1})
+RETURN x.date1 + duration({months: 6})
+```
+### Using APOC to format dates and times
+```cypher
+MATCH (x:Test {id: 1})
+RETURN x.datetime as Datetime,
+apoc.temporal.format( x.datetime, 'HH:mm:ss.SSSS')
+AS formattedDateTime
+```
+
+```cypher
+MATCH (x:Test {id: 1})
+RETURN apoc.date.toISO8601(x.datetime.epochMillis, "ms")
+AS iso8601
+```
+## Graph Traversal
+
+### Anchor of a query
+```cypher
+PROFILE MATCH (p:Person)-[:ACTED_IN]->(m:Movie)
+WHERE p.name = 'Eminem'
+RETURN p.name, m.title
+```
+### Multiple anchors
+```cypher
+PROFILE
+MATCH (p1:Person)-[:ACTED_IN]->(m1)
+MATCH (m2)<-[:ACTED_IN]-(p2:Person)
+WHERE p1.name = 'Tom Hanks'
+AND p2.name = 'Meg Ryan'
+AND m1 = m2
+RETURN m1.title
+```
+### Expand to follow paths
+```cypher
+PROFILE MATCH (m:Movie)<--(p:Person)
+WHERE p.name = 'Clint Eastwood'
+RETURN  m.title
+```
+### Basic query traversal
+```cypher
+MATCH (p:Person)-[:ACTED_IN]->(m:Movie)
+WHERE p.name = 'Eminem'
+RETURN  m.title AS movies
+```
+### Query traversal using multiple patterns
+```cypher
+MATCH (p:Person)-[:ACTED_IN]->(m:Movie),
+(coActors:Person)-[:ACTED_IN]->(m)
+WHERE p.name = 'Eminem'
+RETURN m.title AS movie ,collect(coActors.name) AS coActors
+```
+
+### Query traversal using multiple MATCH clauses
+```cypher
+MATCH (p:Person)-[:ACTED_IN]->(m:Movie)
+WHERE p.name = 'Eminem'
+MATCH (allActors:Person)-[:ACTED_IN]->(m)
+RETURN m.title AS movie, collect(allActors.name) AS allActors
+```
+### Avoiding labels for better performance
+```cypher
+PROFILE MATCH (p:Person)-[:ACTED_IN]->(m)
+WHERE p.name = 'Tom Hanks'
+RETURN m.title AS movie
+```
+### Returning paths
+```cypher
+MATCH p = ((person:Person)-[]->(movie))
+WHERE person.name = 'Walt Disney'
+RETURN p
+```
+
+## Varying Length Traversal
+
+### Shortest path
+```cypher
+MATCH p = shortestPath((p1:Person)-[*]-(p2:Person))
+WHERE p1.name = "Eminem"
+AND p2.name = "Charlton Heston"
+RETURN  p
+```
+
+```cypher
+MATCH p = shortestPath((p1:Person)-[:ACTED_IN*]-(p2:Person))
+WHERE p1.name = "Eminem"
+AND p2.name = "Charlton Heston"
+RETURN  p
+```
+Path Length Bounds
+
+For shortestPath() and allShortestPaths() you can provide an upper bound on the length of the path(s), but not a lower bound.
+
+### Varying length traversal
+```cypher
+MATCH (p:Person {name: 'Eminem'})-[:ACTED_IN*2]-(others:Person)
+RETURN  others.name
+```
+### Four hops away
+```cypher
+MATCH (p:Person {name: 'Eminem'})-[:ACTED_IN*4]-(others:Person)
+RETURN  others.name
+```
+### Up to four hops away
+```cypher
+MATCH (p:Person {name: 'Eminem'})-[:ACTED_IN*1..4]-(others:Person)
+RETURN  others.name
+```
+
+## Scoping Variables
+
+### Scoping variables for a query
+```cypher
+WITH 'Tom Hanks' AS actorName
+MATCH (p:Person)-[:ACTED_IN]->(m:Movie)
+WHERE p.name = actorName
+RETURN m.title AS movies
+```
+### Using WITH to redefine scope
+```cypher
+WITH  'toy story' AS mt, 'Tom Hanks' AS actorName
+MATCH (p:Person)-[:ACTED_IN]->(m:Movie)
+WITH m, toLower(m.title) AS movieTitle
+WHERE p.name = actorName
+AND movieTitle CONTAINS mt
+RETURN m.title AS movies, movieTitle
+```
+
+### Limiting results
+```cypher
+WITH  'Tom Hanks' AS theActor
+MATCH (p:Person)-[:ACTED_IN]->(m:Movie)
+WHERE p.name = theActor
+RETURN m.title AS movies LIMIT 2
+```
+
+```cypher
+WITH  'Tom Hanks' AS theActor
+MATCH (p:Person)-[:ACTED_IN]->(m:Movie)
+WHERE p.name = theActor
+WITH m  LIMIT 2
+// possibly do more with the two m nodes
+RETURN m.title AS movies
+```
+
+### Ordering results
+```cypher
+WITH  'Tom Hanks' AS theActor
+MATCH (p:Person)-[:ACTED_IN]->(m:Movie)
+WHERE p.name = theActor
+WITH m ORDER BY m.year LIMIT 5
+// possibly do more with the five m nodes in a particular order
+RETURN m.title AS movies, m.year AS yearReleased
+```
+
+### Using map projections in a WITH clause
+```cypher
+MATCH (n:Movie)
+WHERE n.imdbRating IS NOT NULL
+AND n.poster IS NOT NULL
+WITH n {
+  .title,
+  .year,
+  .languages,
+  .plot,
+  .poster,
+  .imdbRating,
+  directors: [ (n)<-[:DIRECTED]-(d) | d { tmdbId:d.imdbId, .name } ]
+}
+ORDER BY n.imdbRating DESC LIMIT 4
+RETURN collect(n)
+```
+## Pipelining Queries
+
+### What does pipelining mean?
+```cypher
+WITH  'Tom Hanks' AS theActor
+MATCH (p:Person)-[:ACTED_IN]->(m:Movie)
+WHERE p.name = theActor
+WITH m  LIMIT 5
+// possibly do more with the five m nodes
+RETURN m.title AS movies
+```
+
+```cypher
+WITH  'Tom Hanks' AS theActor
+MATCH (p:Person)-[:ACTED_IN]->(m:Movie)
+WHERE p.name = theActor
+WITH m  LIMIT 5
+MATCH (d:Person)-[:DIRECTED]->(m)
+RETURN d.name AS director,
+m.title AS movies
+```
+### Using WITH for aggregation
+```cypher
+MATCH (:Movie {title: 'Toy Story'})-[:IN_GENRE]->(g:Genre)<-[:IN_GENRE]-(m)
+WHERE m.imdbRating IS NOT NULL
+WITH g.name AS genre,
+count(m) AS moviesInCommon,
+sum(m.imdbRating) AS total
+RETURN genre, moviesInCommon,
+total/moviesInCommon AS score
+ORDER By score DESC
+```
+
+```cypher
+MATCH (u:User {name: "Misty Williams"})-[r:RATED]->(:Movie)
+WITH u, avg(r.rating) AS average
+MATCH (u)-[r:RATED]->(m:Movie)
+WHERE r.rating > average
+RETURN average , m.title AS movie,
+r.rating as rating
+ORDER BY rating DESC
+```
+### Using WITH for collecting
+```cypher
+MATCH (m:Movie)--(a:Actor)
+WHERE m.title CONTAINS 'New York'
+WITH m, collect (a.name) AS actors,
+count(*) AS numActors
+RETURN m.title AS movieTitle, actors
+ORDER BY numActors DESC
+```
+
+```cypher
+MATCH (m:Movie)<-[:ACTED_IN]-(a:Actor)
+WHERE m.title CONTAINS 'New York'
+WITH m, collect (a.name) AS actors,
+count(*) AS numActors
+ORDER BY numActors DESC
+RETURN collect(m { .title, actors, numActors }) AS movies
+```
+
+### Using LIMIT early
+```cypher
+PROFILE MATCH (p:Person)-[:ACTED_IN]->(m:Movie)
+WHERE p.born.year = 1980
+WITH p,
+collect(m.title) AS movies LIMIT 3
+RETURN p.name AS actor, movies
+```
+
+```cypher
+PROFILE MATCH (p:Actor)
+WHERE p.born.year = 1980
+WITH p  LIMIT 3
+MATCH (p)-[:ACTED_IN]->(m:Movie)
+WITH p, collect(m.title) AS movies
+RETURN p.name AS actor,  movies
+```
+
+### Use DISTINCT when necessary
+```cypher
+MATCH (p:Actor)
+WHERE p.born.year = 1980
+WITH p  LIMIT 3
+MATCH (p)-[:ACTED_IN]->(m:Movie)-[:IN_GENRE]->(g:Genre)
+WITH p, collect(g.name) AS genres
+RETURN p.name AS actor, genres
+```
+
+```cypher
+MATCH (p:Actor)
+WHERE p.born.year = 1980
+WITH p  LIMIT 3
+MATCH (p)-[:ACTED_IN]->(m:Movie)-[:IN_GENRE]->(g:Genre)
+WITH p, collect(DISTINCT g.name) AS genres
+RETURN p.name AS actor, genres
+```
+
+## Unwinding Lists
+
+### Using UNWIND
+```cypher
+MATCH (m:Movie)-[:ACTED_IN]-(a:Actor)
+WHERE a.name = 'Tom Hanks'
+UNWIND m.languages AS lang
+RETURN m.title AS movie,
+m.languages AS languages,
+lang AS language
+```
+
+```cypher
+MATCH (m:Movie)
+UNWIND m.languages AS lang
+WITH m, trim(lang) AS language
+// this automatically, makes the language distinct because it's a grouping key
+WITH language, collect(m.title) AS movies
+RETURN language, movies[0..10]
+```
+## Subqueries
+
+### Performing subqueries with CALL
+```cypher
+CALL {
+   MATCH (m:Movie) WHERE m.year = 2000
+   RETURN m ORDER BY m.imdbRating DESC LIMIT 10
+}
+MATCH  (:User)-[r:RATED]->(m)
+RETURN m.title, avg(r.rating)
+```
+### Passing variables into a subquery
+```cypher
+MATCH (m:Movie)
+CALL {
+    WITH m
+    MATCH (m)<-[r:RATED]-(u:User)
+     WHERE r.rating = 5
+    RETURN count(u) AS numReviews
+}
+RETURN m.title, numReviews
+ORDER BY numReviews DESC
+```
+
+### Combining query results with UNION
+```cypher
+MATCH (m:Movie) WHERE m.year = 2000
+RETURN {type:"movies", theMovies: collect(m.title)} AS data
+UNION ALL
+MATCH (a:Actor) WHERE a.born.year > 2000
+RETURN { type:"actors", theActors: collect(DISTINCT a.name)} AS data
+```
+Understanding UNION vs UNION ALL
+
+UNION ALL returns all results which is more efficient on memory but can lead to duplicates. UNION returns distinct results.
+
+### Using UNION with subqueries
+```cypher
+MATCH (p:Person)
+WITH p LIMIT 100
+CALL {
+  WITH p
+  OPTIONAL MATCH (p)-[:ACTED_IN]->(m:Movie)
+  RETURN m.title + ": " + "Actor" AS work
+UNION
+  WITH p
+  OPTIONAL MATCH (p)-[:DIRECTED]->(m:Movie)
+  RETURN m.title+ ": " +  "Director" AS work
+}
+RETURN p.name, collect(work)
+```
+
+## Parameters in Cypher
+
+### Using Cypher parameters
+```cypher
+MATCH (p:Person)-[:ACTED_IN]->(m:Movie)
+WHERE p.name = $actorName
+RETURN m.released AS releaseDate,
+m.title AS title
+ORDER BY m.released DESC
+```
+
+### Setting a parameter
+```cypher
+:param actorName: 'Tom Hanks'
+```
+
+### Setting multiple parameters
+```cypher
+:params {actorName: 'Tom Cruise', movieName: 'Top Gun'}
+```
+
+### Using multiple parameters
+```cypher
+MATCH (p:Person)-[:ACTED_IN]->(m:Movie)
+WHERE p.name = $actorName
+AND m.title = $movieName
+RETURN p, m
+```
+
+### Viewing parameters
+```cypher
+:params
+```
+
+### Removing parameters
+```cypher
+:params {}
+```
+
+## Example: Python
+```python
+def get_actors(tx, movieTitle): # (1)
+  result = tx.run("""
+    MATCH (p:Person)-[:ACTED_IN]->(m:Movie)
+    WHERE m.title = $title
+    RETURN p
+  """, title=movieTitle)
+
+  # Access the `p` value from each record
+  return [ record["p"] for record in result ]
+
+with driver.session() as session:
+    result = session.read_transaction(get_actors, movieTitle="Toy Story")
 ```
